@@ -1,0 +1,166 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+interface Detector {
+  +detect(input: String): Boolean
+}
+
+class Token {
+  +DIGITS : Set<String>
+  +NONZERO_DIGITS : Set<String>
+  +BINARY : Set<String>
+  +SPECIALS : Set<String>
+  +UPPER : Set<String>
+  +LOWER : Set<String>
+  +isDigit(s: String) : Boolean
+  +isNonZeroDigit(s: String) : Boolean
+  +isBinary(s: String) : Boolean
+  +isUpper(s: String) : Boolean
+  +isLower(s: String) : Boolean
+  +isLetter(s: String) : Boolean
+  +isSpecial(s: String) : Boolean
+}
+
+class Tokenize {
+  +tokenize(input: String): List<String>
+}
+
+' ===== Integer =====
+interface IntegerState {
+  +next(tok: String): IntegerState
+  +isAccepting(): Boolean
+}
+class IntegerDetector {
+  +detect(input: String): Boolean
+  -state: IntegerState
+}
+class IntegerStart
+class IntegerInNumber
+class IntegerInvalid
+
+' ===== Float =====
+interface FloatState {
+  +next(tok: String): FloatState
+  +isAccepting(): Boolean
+}
+class FloatDetector {
+  +detect(input: String): Boolean
+  -state: FloatState
+}
+class FPStart
+class FPIntPart
+class FPZero
+class FPDotStart
+class FPDotSeen
+class FPFraction
+class FPInvalid
+
+' ===== Binary =====
+interface BinaryState {
+  +next(tok: String): BinaryState
+  +isAccepting(): Boolean
+}
+class BinaryDetector {
+  +detect(input: String): Boolean
+  -state: BinaryState
+}
+class BinStart
+class BinOne
+class BinZero
+class BinInvalid
+
+' ===== Email =====
+interface EmailState {
+  +next(tok: String): EmailState
+  +isAccepting(): Boolean
+}
+class EmailDetector {
+  +detect(input: String): Boolean
+  -state: EmailState
+}
+class EmailStart
+class EmailLocal
+class EmailAt
+class EmailDomain
+class EmailDot
+class EmailSuffix
+class EmailInvalid
+
+' ===== Password =====
+interface PasswordState {
+  +next(tok: String, ctx: PassContext): PasswordState
+  +isAccepting(ctx: PassContext): Boolean
+}
+class PasswordDetector {
+  +detect(input: String): Boolean
+  -state: PasswordState
+}
+class PassStart
+class PassBody
+class PassInvalid
+class PassContext {
+  +hasUpper: Boolean
+  +hasSpecial: Boolean
+  +endedWithSpecial: Boolean
+}
+
+' --- Inheritance from Detector
+Detector <|.. IntegerDetector
+Detector <|.. FloatDetector
+Detector <|.. BinaryDetector
+Detector <|.. EmailDetector
+Detector <|.. PasswordDetector
+
+' --- State interface inheritance
+IntegerState <|.. IntegerStart
+IntegerState <|.. IntegerInNumber
+IntegerState <|.. IntegerInvalid
+
+FloatState <|.. FPStart
+FloatState <|.. FPIntPart
+FloatState <|.. FPZero
+FloatState <|.. FPDotStart
+FloatState <|.. FPDotSeen
+FloatState <|.. FPFraction
+FloatState <|.. FPInvalid
+
+BinaryState <|.. BinStart
+BinaryState <|.. BinOne
+BinaryState <|.. BinZero
+BinaryState <|.. BinInvalid
+
+EmailState <|.. EmailStart
+EmailState <|.. EmailLocal
+EmailState <|.. EmailAt
+EmailState <|.. EmailDomain
+EmailState <|.. EmailDot
+EmailState <|.. EmailSuffix
+EmailState <|.. EmailInvalid
+
+PasswordState <|.. PassStart
+PasswordState <|.. PassBody
+PasswordState <|.. PassInvalid
+PasswordDetector --> PassContext
+
+' --- Composition: each detector owns a current state instance
+IntegerDetector *-- IntegerState : state
+FloatDetector   *-- FloatState   : state
+BinaryDetector  *-- BinaryState  : state
+EmailDetector   *-- EmailState   : state
+PasswordDetector*-- PasswordState: state
+
+' --- Utility associations (usage)
+IntegerDetector --> Token
+IntegerDetector --> Tokenize
+
+FloatDetector --> Token
+FloatDetector --> Tokenize
+
+BinaryDetector --> Token
+BinaryDetector --> Tokenize
+
+EmailDetector --> Tokenize
+
+PasswordDetector --> Token
+PasswordDetector --> Tokenize
+@enduml

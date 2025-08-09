@@ -19,18 +19,24 @@ object PassInvalid : PasswordState {
 }
 
 object PassStart : PasswordState {
-    override fun next(tok: String, ctx: PassContext): PasswordState =
-        if (tok == " ") PassInvalid else PassBody
+    override fun next(tok: String, ctx: PassContext): PasswordState {
+        // Spaces and any other characters are allowed by the spec.
+        if (Token.isUpper(tok)) ctx.hasUpper = true
+        if (Token.isSpecial(tok)) ctx.hasSpecial = true
+        return PassBody
+    }
     override fun isAccepting(ctx: PassContext) = false
 }
 
 object PassBody : PasswordState {
     override fun next(tok: String, ctx: PassContext): PasswordState {
-        if (tok == " ") return PassInvalid
+        // Accept any character; just track the two required features.
         if (Token.isUpper(tok)) ctx.hasUpper = true
         if (Token.isSpecial(tok)) ctx.hasSpecial = true
         return this
     }
-    override fun isAccepting(ctx: PassContext) =
-        ctx.hasUpper && ctx.hasSpecial && !ctx.endedWithSpecial
+    override fun isAccepting(ctx: PassContext): Boolean {
+        // End-of-input acceptance is decided by PasswordDetector, which sets endedWithSpecial.
+        return ctx.hasUpper && ctx.hasSpecial && !ctx.endedWithSpecial
+    }
 }
